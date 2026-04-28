@@ -59,7 +59,7 @@ export default function Layout() {
           </nav>
 
           <div className="flex items-center gap-4 text-sm">
-            <span className="text-neutral-600">@{user?.username}</span>
+            <span className="text-neutral-600">{user?.username}</span>{" "}
             <button
               type="button"
               onClick={logout}

@@ -45,7 +45,7 @@ export default function Dashboard() {
     <div className="space-y-10">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
-          Welcome back, @{user?.username}
+          Welcome back, {user?.username}{" "}
         </h1>
         <p className="text-neutral-600 mt-2">
           Here&apos;s what&apos;s happening across your profile intelligence
