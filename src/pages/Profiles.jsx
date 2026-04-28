@@ -33,16 +33,24 @@ export default function Profiles() {
       setError(null);
       try {
         const query = {
-          page: filters.page,
-          limit: filters.limit,
+          page: Number.parseInt(searchParams.get("page") ?? "1", 10),
+          limit: Number.parseInt(searchParams.get("limit") ?? "25", 10),
         };
-        if (filters.gender) query.gender = filters.gender;
-        if (filters.country) query.country_id = filters.country.toUpperCase();
-        if (filters.ageGroup) query.age_group = filters.ageGroup;
-        if (filters.minAge) query.min_age = filters.minAge;
-        if (filters.maxAge) query.max_age = filters.maxAge;
-        if (filters.sortBy) query.sort_by = filters.sortBy;
-        if (filters.order) query.order = filters.order;
+        const gender = searchParams.get("gender");
+        const country = searchParams.get("country");
+        const ageGroup = searchParams.get("age_group");
+        const minAge = searchParams.get("min_age");
+        const maxAge = searchParams.get("max_age");
+        const sortBy = searchParams.get("sort_by");
+        const order = searchParams.get("order");
+
+        if (gender) query.gender = gender;
+        if (country) query.country_id = country.toUpperCase();
+        if (ageGroup) query.age_group = ageGroup;
+        if (minAge) query.min_age = minAge;
+        if (maxAge) query.max_age = maxAge;
+        if (sortBy) query.sort_by = sortBy;
+        if (order) query.order = order;
 
         const response = await apiRequest("GET", "/api/profiles", { query });
         if (!cancelled) setData(response);
@@ -51,7 +59,6 @@ export default function Profiles() {
       } finally {
         if (!cancelled) setLoading(false);
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
     [searchParams],
   );
