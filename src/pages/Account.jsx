@@ -20,7 +20,7 @@ export default function Account() {
       </div>
 
       <div className="border border-neutral-200 rounded-md divide-y divide-neutral-200">
-        <Row label="Username" value={`@${user?.username ?? "—"}`} />
+        <Row label="Username" value={user?.username ?? "—"} />
         <Row label="Email" value={user?.email || "—"} />
         <Row label="Role" value={user?.role ?? "—"} />
         <Row label="GitHub ID" value={user?.id ?? "—"} mono />
