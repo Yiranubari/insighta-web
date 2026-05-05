@@ -38,6 +38,7 @@ export default function Upload() {
         .split("; ")
         .find((row) => row.startsWith("csrf_token="))
         ?.split("=")[1];
+      console.log("CSRF token:", csrfToken);
 
       const headers = {
         Accept: "application/json",
