@@ -1,13 +1,22 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { apiRequest } from "../lib/api.js";
+import { Link, useLocation } from "react-router-dom";
+import { apiRequest, setCsrfToken } from "../lib/api.js";
 import { useAuth } from "../contexts/useAuth.js";
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const location = useLocation();
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const csrf = params.get("csrf");
+    if (csrf) {
+      setCsrfToken(csrf);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     let cancelled = false;

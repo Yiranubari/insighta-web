@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getCsrfToken } from "../lib/api.js";
 
 const API_URL = import.meta.env.VITE_API_URL;
 const API_VERSION = "1";
@@ -34,11 +35,7 @@ export default function Upload() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const csrfToken = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("csrf_token="))
-        ?.split("=")[1];
-      console.log("CSRF token:", csrfToken);
+      const csrfToken = getCsrfToken();
 
       const headers = {
         Accept: "application/json",
