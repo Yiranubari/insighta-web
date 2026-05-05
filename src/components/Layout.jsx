@@ -46,6 +46,30 @@ export default function Layout() {
             >
               Search
             </NavLink>
+            {user?.role === "admin" ? (
+              <NavLink
+                to="/upload"
+                className={({ isActive }) =>
+                  isActive
+                    ? "text-black font-medium"
+                    : "text-neutral-600 hover:text-black"
+                }
+              >
+                Upload
+              </NavLink>
+            ) : null}
+            {user?.role === "admin" || user?.role === "analyst" ? (
+              <NavLink
+                to="/export"
+                className={({ isActive }) =>
+                  isActive
+                    ? "text-black font-medium"
+                    : "text-neutral-600 hover:text-black"
+                }
+              >
+                Export
+              </NavLink>
+            ) : null}
             <NavLink
               to="/account"
               className={({ isActive }) =>
