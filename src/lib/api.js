@@ -1,8 +1,17 @@
 const API_URL = import.meta.env.VITE_API_URL;
 const API_VERSION = "1";
+let csrfToken = null;
 
 if (!API_URL) {
   console.warn("VITE_API_URL is not set. API calls will fail.");
+}
+
+export function setCsrfToken(token) {
+  csrfToken = token || null;
+}
+
+export function getCsrfToken() {
+  return csrfToken;
 }
 
 export class ApiError extends Error {
@@ -49,11 +58,6 @@ export class RateLimitError extends ApiError {
   }
 }
 
-function readCsrfTokenFromCookie() {
-  const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
-  return match ? decodeURIComponent(match[1]) : null;
-}
-
 /**
  * Make an authenticated request. Returns parsed JSON on success.
  * Throws ApiError subclasses on non-2xx.
@@ -84,7 +88,7 @@ function readCsrfTokenFromCookie() {
   const isStateChanging = !["GET", "HEAD", "OPTIONS"].includes(upperMethod);
 
   if (isStateChanging) {
-    const csrf = readCsrfTokenFromCookie();
+    const csrf = getCsrfToken();
     if (csrf) {
       headers["X-CSRF-Token"] = csrf;
     }
@@ -115,7 +119,23 @@ export async function refreshSession() {
       },
       body: "{}",
     });
-    return response.ok;
+
+    if (!response.ok) return false;
+
+    const rawBody = await response.text();
+    if (rawBody) {
+      let parsed = null;
+      try {
+        parsed = JSON.parse(rawBody);
+      } catch {
+        parsed = null;
+      }
+      if (parsed && typeof parsed.csrf_token === "string") {
+        setCsrfToken(parsed.csrf_token);
+      }
+    }
+
+    return true;
   } catch {
     return false;
   }
