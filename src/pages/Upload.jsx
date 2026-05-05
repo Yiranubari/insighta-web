@@ -34,15 +34,16 @@ export default function Upload() {
       const formData = new FormData();
       formData.append("file", file);
 
+      const csrfToken = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("csrf_token="))
+        ?.split("=")[1];
+
       const headers = {
         Accept: "application/json",
         "X-API-Version": API_VERSION,
+        "X-CSRF-Token": csrfToken,
       };
-
-      const csrfMatch = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
-      if (csrfMatch?.[1]) {
-        headers["X-CSRF-Token"] = decodeURIComponent(csrfMatch[1]);
-      }
 
       const response = await fetch(
         new URL("/api/profiles/upload", API_URL).toString(),
