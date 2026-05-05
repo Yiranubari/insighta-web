@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { apiRequest } from "../lib/api.js";
 
 const API_URL = import.meta.env.VITE_API_URL;
 const API_VERSION = "1";
@@ -38,6 +39,10 @@ export default function Export() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState(null);
+  const [previewData, setPreviewData] = useState(null);
+  const [previewError, setPreviewError] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(searchParams.toString() !== "");
 
   const filters = {
     gender: searchParams.get("gender") ?? "",
@@ -57,11 +62,63 @@ export default function Export() {
       if (value) params.set(key, String(value));
     }
     setSearchParams(params);
+    setSubmitted(true);
   }
 
   function handleClear() {
     setSearchParams(new URLSearchParams());
+    setSubmitted(false);
+    setPreviewData(null);
+    setPreviewError(null);
   }
+
+  const fetchPreview = useCallback(
+    async (cancelled = false) => {
+      if (!submitted) return;
+      if (cancelled) return;
+      setPreviewLoading(true);
+      setPreviewError(null);
+      try {
+        const query = {};
+        const gender = searchParams.get("gender");
+        const country = searchParams.get("country");
+        const ageGroup = searchParams.get("age_group");
+        const minAge = searchParams.get("min_age");
+        const maxAge = searchParams.get("max_age");
+        const sortBy = searchParams.get("sort_by");
+        const order = searchParams.get("order");
+
+        if (gender) query.gender = gender;
+        if (country) query.country_id = country.toUpperCase();
+        if (ageGroup) query.age_group = ageGroup;
+        if (minAge) query.min_age = minAge;
+        if (maxAge) query.max_age = maxAge;
+        if (sortBy) query.sort_by = sortBy;
+        if (order) query.order = order;
+
+        const response = await apiRequest("GET", "/api/profiles", { query });
+        if (!cancelled) setPreviewData(response);
+      } catch (err) {
+        if (!cancelled) {
+          setPreviewError(err.message || "Failed to load profiles");
+          setPreviewData(null);
+        }
+      } finally {
+        if (!cancelled) setPreviewLoading(false);
+      }
+    },
+    [searchParams, submitted],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      await fetchPreview(cancelled);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchPreview]);
 
   async function handleDownload() {
     setDownloading(true);
@@ -231,6 +288,75 @@ export default function Export() {
           </button>
         </div>
       </form>
+
+      {!submitted ? null : previewLoading ? (
+        <div className="text-neutral-500">Loading...</div>
+      ) : previewError ? (
+        <div className="text-red-600">
+          <p>Could not load profiles.</p>
+          <p className="text-sm text-neutral-500 mt-1">{previewError}</p>
+        </div>
+      ) : previewData?.data?.length === 0 ? (
+        <div className="text-neutral-500 py-8 text-center border border-neutral-200 rounded-md">
+          No profiles match these filters.
+        </div>
+      ) : previewData?.data ? (
+        <>
+          <div className="text-sm text-neutral-500">
+            {previewData?.total?.toLocaleString() ?? "0"} profiles match these
+            filters
+          </div>
+
+          <div className="border border-neutral-200 rounded-md overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-neutral-50 text-left text-neutral-600">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Name</th>
+                  <th className="px-4 py-3 font-medium">Gender</th>
+                  <th className="px-4 py-3 font-medium">Age</th>
+                  <th className="px-4 py-3 font-medium">Group</th>
+                  <th className="px-4 py-3 font-medium">Country</th>
+                  <th className="px-4 py-3 font-medium">Created</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-200">
+                {previewData?.data?.map((p) => (
+                  <tr
+                    key={p.id}
+                    className="hover:bg-neutral-50 transition-colors"
+                  >
+                    <td className="px-4 py-3">
+                      <Link
+                        to={`/profiles/${p.id}`}
+                        className="font-medium hover:underline"
+                      >
+                        {p.name}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-neutral-600">
+                      {p.gender || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-neutral-600">
+                      {p.age ?? "—"}
+                    </td>
+                    <td className="px-4 py-3 text-neutral-600">
+                      {p.age_group || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-neutral-600">
+                      {p.country_name && p.country_id
+                        ? `${p.country_name} (${p.country_id})`
+                        : p.country_name || p.country_id || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-neutral-500 text-xs">
+                      {new Date(p.created_at).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      ) : null}
 
       <div className="flex items-center gap-3">
         <button

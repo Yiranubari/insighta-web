@@ -3,11 +3,6 @@ import { useState } from "react";
 const API_URL = import.meta.env.VITE_API_URL;
 const API_VERSION = "1";
 
-function readCsrfTokenFromCookie() {
-  const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
-  return match ? decodeURIComponent(match[1]) : null;
-}
-
 function getErrorMessage(rawBody, status) {
   let message = rawBody || `HTTP ${status}`;
   try {
@@ -44,9 +39,9 @@ export default function Upload() {
         "X-API-Version": API_VERSION,
       };
 
-      const csrf = readCsrfTokenFromCookie();
-      if (csrf) {
-        headers["X-CSRF-Token"] = csrf;
+      const csrfMatch = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+      if (csrfMatch?.[1]) {
+        headers["X-CSRF-Token"] = decodeURIComponent(csrfMatch[1]);
       }
 
       const response = await fetch(
