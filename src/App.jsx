@@ -8,6 +8,8 @@ import Profiles from "./pages/Profiles.jsx";
 import ProfileDetail from "./pages/ProfileDetail.jsx";
 import Search from "./pages/Search.jsx";
 import Account from "./pages/Account.jsx";
+import Upload from "./pages/Upload.jsx";
+import Export from "./pages/Export.jsx";
 import Layout from "./components/Layout.jsx";
 
 function ProtectedRoute({ children }) {
@@ -46,6 +48,28 @@ function PublicOnlyRoute({ children }) {
   return children;
 }
 
+function RoleRoute({ children, allowedRoles }) {
+  const { isAuthenticated, loading, user } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-neutral-500">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!allowedRoles.includes(user?.role)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -72,6 +96,22 @@ export default function App() {
             <Route path="/profiles" element={<Profiles />} />
             <Route path="/profiles/:id" element={<ProfileDetail />} />
             <Route path="/search" element={<Search />} />
+            <Route
+              path="/upload"
+              element={
+                <RoleRoute allowedRoles={["admin"]}>
+                  <Upload />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/export"
+              element={
+                <RoleRoute allowedRoles={["admin", "analyst"]}>
+                  <Export />
+                </RoleRoute>
+              }
+            />
             <Route path="/account" element={<Account />} />
           </Route>
 
